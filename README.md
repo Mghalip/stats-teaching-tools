@@ -107,14 +107,7 @@ stats-teaching-tools/
 
 ## License
 
-当前使用 **MIT License**。
-
-如果你后续更希望：
-- 要求署名
-- 限制商用
-- 更偏教育共享
-
-也可以改成更适合你目标的许可方案。
+This project is released under the **MIT License**.
 
 ## Author / context
 
