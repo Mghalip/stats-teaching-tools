@@ -109,15 +109,6 @@ stats-teaching-tools/
 
 This project is released under the **MIT License**.
 
-## Author / context
-
-This repo is being prepared as a shareable collection of classroom-friendly statistics tools for teachers.
-
-如果之后正式公开到 GitHub，可以再补：
-- 截图
-- demo GIF
-- GitHub Pages 演示页
-- 更完整的教学说明
 
 ## GitHub Pages
 
