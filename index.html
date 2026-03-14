@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics Teaching Tools</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #111827;
+      --card: rgba(17,24,39,.9);
+      --ink: #f8fafc;
+      --muted: #cbd5e1;
+      --accent: #60a5fa;
+      --accent2: #a78bfa;
+      --line: rgba(148,163,184,.2);
+      --shadow: 0 18px 42px rgba(0,0,0,.28);
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(96,165,250,.16), transparent 24%),
+        radial-gradient(circle at 80% 10%, rgba(167,139,250,.14), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 60px; }
+    h1 { margin: 0 0 10px; font-size: 42px; }
+    .subtitle { color: var(--muted); line-height: 1.7; max-width: 860px; margin-bottom: 28px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card img { width: 100%; display: block; aspect-ratio: 16/10; object-fit: cover; border-bottom: 1px solid var(--line); }
+    .card-body { padding: 20px; }
+    .card h2 { margin: 0 0 8px; font-size: 22px; }
+    .card p { color: var(--muted); line-height: 1.6; min-height: 72px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    a.button {
+      display: inline-block; text-decoration: none; color: white; font-weight: 700;
+      padding: 10px 14px; border-radius: 12px;
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .ghost { background: rgba(255,255,255,.06) !important; color: var(--ink) !important; }
+    .footer { margin-top: 28px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Statistics Teaching Tools</h1>
+    <div class="subtitle">
+      Lightweight browser-based classroom tools for statistics teachers. Open any tool directly in your browser — no installation, no backend, no account required.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <img src="screenshots/binomial_lab.png" alt="Binomial Lab preview" />
+        <div class="card-body">
+          <h2>Binomial Lab</h2>
+          <p>A classroom-friendly interactive page for introducing binomial settings, repeated trials, and how probability and sample size shape the distribution.</p>
+          <div class="actions">
+            <a class="button" href="binomial_lab.html">Open tool</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="screenshots/sampling_distribution_bucket.png" alt="Sampling Distribution Bucket preview" />
+        <div class="card-body">
+          <h2>Sampling Distribution Bucket</h2>
+          <p>An interactive visualization for repeated sampling and sampling distributions, useful for helping students build intuition before formulas.</p>
+          <div class="actions">
+            <a class="button" href="sampling_distribution_bucket.html">Open tool</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Created as a shareable set of classroom-ready statistics tools.
+    </div>
+  </div>
+</body>
+</html>

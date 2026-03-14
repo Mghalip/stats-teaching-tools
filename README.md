@@ -125,3 +125,13 @@ This repo is being prepared as a shareable collection of classroom-friendly stat
 - demo GIF
 - GitHub Pages 演示页
 - 更完整的教学说明
+
+## GitHub Pages
+
+After enabling GitHub Pages for this repository, the tools can be opened from the project homepage directly.
+
+Suggested Pages entry URL:
+
+- `/` → project landing page
+- `/binomial_lab.html` → Binomial Lab
+- `/sampling_distribution_bucket.html` → Sampling Distribution Bucket
