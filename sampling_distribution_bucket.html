@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>霍格沃茨抽样分布演示：魔法木桶抽球</title>
+  <style>
+    :root {
+      --bg: #0f0b17;
+      --card: rgba(22, 16, 34, 0.92);
+      --ink: #f8ead2;
+      --muted: #c9b88f;
+      --accent: #7c3aed;
+      --red: #dc2626;
+      --gold: #d4a73b;
+      --green: #2fa36b;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --line: rgba(212, 167, 59, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top, rgba(124,58,237,.18), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(212,167,59,.12), transparent 22%),
+        linear-gradient(180deg, #1a1228 0%, var(--bg) 100%);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(4px);
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      color: var(--gold);
+      letter-spacing: .04em;
+    }
+
+    .controls label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .control {
+      margin-bottom: 16px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(39, 28, 60, .9);
+      color: var(--gold);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+    }
+
+    button {
+      border: 1px solid rgba(212,167,59,.28);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, #8b5cf6 0%, #5b21b6 100%);
+      color: #fff7e6;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .08s ease, opacity .2s ease, box-shadow .2s ease;
+      box-shadow: 0 8px 18px rgba(91,33,182,.28);
+    }
+
+    button:hover { opacity: .97; box-shadow: 0 10px 24px rgba(91,33,182,.36); }
+    button:active { transform: translateY(1px); }
+    button.secondary { background: linear-gradient(180deg, #4b5563 0%, #1f2937 100%); color: #f3e8c8; }
+    button.warn { background: linear-gradient(180deg, #b45309 0%, #7c2d12 100%); }
+    button.good { background: linear-gradient(180deg, #15803d 0%, #166534 100%); }
+
+    .stage {
+      min-height: 760px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: rgba(15, 11, 23, .72);
+      border-radius: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .stat .value {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .barrel-zone {
+      position: relative;
+      min-height: 330px;
+      padding: 10px 10px 0;
+      overflow: hidden;
+    }
+
+    .barrel {
+      position: relative;
+      width: 320px;
+      height: 250px;
+      margin: 0 auto;
+      border-radius: 30px 30px 90px 90px;
+      background: linear-gradient(180deg, #261a14 0%, #5a3b22 48%, #3d2815 100%);
+      box-shadow: inset 0 0 0 2px rgba(212,167,59,.28), inset 0 0 0 8px rgba(72,47,24,.55), inset 0 -24px 40px rgba(0,0,0,.34), 0 18px 40px rgba(0,0,0,.35);
+    }
+
+    .barrel::before, .barrel::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(212,167,59,.7), rgba(120,82,19,.8));
+      box-shadow: inset 0 2px 0 rgba(255,243,201,.28);
+    }
+
+    .barrel::before { top: 48px; }
+    .barrel::after { top: 148px; }
+
+    .barrel-mouth {
+      width: 340px;
+      height: 56px;
+      margin: 0 auto -26px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #7c5b23 0%, #3c240e 100%);
+      box-shadow: inset 0 10px 16px rgba(255,244,210,.14), 0 0 18px rgba(212,167,59,.16);
+      position: relative;
+      z-index: 2;
+    }
+
+    .bucket-balls {
+      position: absolute;
+      inset: 24px 24px 40px;
+      overflow: hidden;
+      border-radius: 20px 20px 60px 60px;
+    }
+
+    .ball {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      box-shadow: inset -3px -4px 6px rgba(0,0,0,.15), inset 3px 3px 4px rgba(255,255,255,.45);
+    }
+
+    .sample-area {
+      background: linear-gradient(180deg, rgba(26,18,40,.92) 0%, rgba(17,12,28,.94) 100%);
+      border: 2px dashed rgba(212,167,59,.38);
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 210px;
+      box-shadow: inset 0 0 18px rgba(124,58,237,.12);
+    }
+
+    .sample-balls {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .sample-ball {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(-28px) scale(.75);
+      animation: drop .45s ease forwards;
+      box-shadow: inset -4px -6px 8px rgba(0,0,0,.15), inset 4px 4px 8px rgba(255,255,255,.45), 0 6px 10px rgba(0,0,0,.1);
+    }
+
+    @keyframes drop {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .chart-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      background: linear-gradient(180deg, rgba(17,12,28,.96) 0%, rgba(26,18,40,.96) 100%);
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .history {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(15,11,23,.72);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .history-item {
+      padding: 6px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+
+    .history-item:last-child { border-bottom: 0; }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1180px) {
+      .grid { grid-template-columns: 1fr; }
+      .stage { min-height: unset; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>霍格沃茨魔法木桶：抽样分布动态演示</h1>
+    <div class="subtitle">
+      想象礼堂角落里放着一只被施了魔法的木桶，里面有 <strong>10000</strong> 个闪闪发亮的小球。你可以控制红球比例、样本量和重复抽样次数，观察「每次抽样中红球个数」与「样本红球比例」如何像魔法轨迹一样逐渐形成抽样分布。
+    </div>
+
+    <div class="grid">
+      <section class="panel controls">
+        <h2>魔法控制台</h2>
+
+        <div class="control">
+          <label for="redPct">总体中红球比例：<span id="redPctValue">30%</span></label>
+          <input id="redPct" type="range" min="5" max="95" step="1" value="30" />
+          <div class="small">总体逻辑上有 10000 个球；视觉上只渲染木桶中的代表性球群。</div>
+        </div>
+
+        <div class="control">
+          <label for="sampleSize">每次抽样个数 n：<span id="sampleSizeValue">20</span></label>
+          <input id="sampleSize" type="range" min="5" max="60" step="1" value="20" />
+        </div>
+
+        <div class="control">
+          <label for="batchCount">自动运行时每批抽样次数：<span id="batchCountValue">50</span></label>
+          <input id="batchCount" type="range" min="10" max="300" step="10" value="50" />
+        </div>
+
+        <div class="control">
+          <label>抽样方式</label>
+          <div class="row">
+            <label class="pill"><input type="radio" name="mode" value="without" checked /> 不放回（近似）</label>
+            <label class="pill"><input type="radio" name="mode" value="with" /> 放回</label>
+          </div>
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <button id="drawOnceBtn">抽 1 次</button>
+            <button id="draw10Btn" class="secondary">抽 10 次</button>
+            <button id="autoBtn" class="good">自动播放</button>
+            <button id="resetBtn" class="warn">重置</button>
+          </div>
+        </div>
+
+        <div class="control">
+          <div class="small">
+            <strong>课堂咒语提示：</strong><br>
+            可以先让学生预测：当红球比例固定时，样本量越大，样本比例会更稳定还是更分散？再用这只“魔法木桶”把答案召唤出来。
+          </div>
+        </div>
+      </section>
+
+      <section class="panel stage">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">总体大小</div>
+            <div class="value">10000</div>
+          </div>
+          <div class="stat">
+            <div class="label">当前样本红球数</div>
+            <div class="value" id="currentRed">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">当前样本比例 p̂</div>
+            <div class="value" id="currentPhat">0.000</div>
+          </div>
+          <div class="stat">
+            <div class="label">累计抽样次数</div>
+            <div class="value" id="drawCount">0</div>
+          </div>
+        </div>
+
+        <div class="barrel-zone">
+          <div class="barrel-mouth"></div>
+          <div class="barrel">
+            <div class="bucket-balls" id="bucketBalls"></div>
+          </div>
+        </div>
+
+        <div class="sample-area">
+          <div class="row" style="justify-content: space-between; align-items: center;">
+            <h2 style="margin:0;">本次召唤出的样本</h2>
+            <div class="pill">红球 <span id="sampleRedCount">0</span> / <span id="sampleNCount">20</span></div>
+          </div>
+          <div class="sample-balls" id="sampleBalls"></div>
+        </div>
+
+        <div class="small">
+          每次施放一次抽样咒语，右侧都会更新分布。你可以观察「红球个数」和「样本比例」如何随着重复抽样逐渐凝聚成稳定图形。
+        </div>
+      </section>
+
+      <section class="panel chart-wrap">
+        <h2>魔法抽样分布</h2>
+        <div class="legend">
+          <span><span class="dot" style="background:#ef4444"></span>红球个数分布</span>
+          <span><span class="dot" style="background:#2563eb"></span>样本比例 p̂ 分布</span>
+          <span><span class="dot" style="background:#f59e0b"></span>理论总体红球比例 p</span>
+        </div>
+
+        <canvas id="countChart" width="340" height="240"></canvas>
+        <canvas id="propChart" width="340" height="240"></canvas>
+
+        <div>
+          <h2 style="margin-bottom:10px;">最近施法记录</h2>
+          <div class="history" id="history"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 10000;
+    const bucketBallsEl = document.getElementById('bucketBalls');
+    const sampleBallsEl = document.getElementById('sampleBalls');
+    const historyEl = document.getElementById('history');
+    const countChart = document.getElementById('countChart');
+    const propChart = document.getElementById('propChart');
+
+    const redPctInput = document.getElementById('redPct');
+    const sampleSizeInput = document.getElementById('sampleSize');
+    const batchCountInput = document.getElementById('batchCount');
+    const drawOnceBtn = document.getElementById('drawOnceBtn');
+    const draw10Btn = document.getElementById('draw10Btn');
+    const autoBtn = document.getElementById('autoBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const redPctValue = document.getElementById('redPctValue');
+    const sampleSizeValue = document.getElementById('sampleSizeValue');
+    const batchCountValue = document.getElementById('batchCountValue');
+    const currentRed = document.getElementById('currentRed');
+    const currentPhat = document.getElementById('currentPhat');
+    const drawCount = document.getElementById('drawCount');
+    const sampleRedCount = document.getElementById('sampleRedCount');
+    const sampleNCount = document.getElementById('sampleNCount');
+
+    let history = [];
+    let autoTimer = null;
+
+    const palette = ['#60a5fa', '#34d399', '#fbbf24', '#c084fc', '#22d3ee', '#f472b6'];
+
+    function state() {
+      return {
+        redPct: Number(redPctInput.value),
+        p: Number(redPctInput.value) / 100,
+        n: Number(sampleSizeInput.value),
+        batch: Number(batchCountInput.value),
+        mode: document.querySelector('input[name="mode"]:checked').value,
+      };
+    }
+
+    function updateLabels() {
+      const s = state();
+      redPctValue.textContent = `${s.redPct}%`;
+      sampleSizeValue.textContent = s.n;
+      batchCountValue.textContent = s.batch;
+      sampleNCount.textContent = s.n;
+    }
+
+    function renderBucket() {
+      const s = state();
+      bucketBallsEl.innerHTML = '';
+      const count = 220;
+      for (let i = 0; i < count; i++) {
+        const ball = document.createElement('div');
+        ball.className = 'ball';
+        const isRed = Math.random() < s.p;
+        ball.style.background = isRed ? '#ef4444' : palette[i % palette.length];
+        ball.style.left = `${Math.random() * 240}px`;
+        ball.style.top = `${Math.random() * 160 + 10}px`;
+        bucketBallsEl.appendChild(ball);
+      }
+    }
+
+    function sampleWithoutReplacementApprox(n, p) {
+      // For large N=10000 and small-ish n, using Bernoulli approximation is visually/teaching-wise sufficient.
+      let red = 0;
+      const balls = [];
+      for (let i = 0; i < n; i++) {
+        const isRed = Math.random() < p;
+        if (isRed) red++;
+        balls.push(isRed);
+      }
+      return { red, balls };
+    }
+
+    function sampleWithReplacement(n, p) {
+      let red = 0;
+      const balls = [];
+      for (let i = 0; i < n; i++) {
+        const isRed = Math.random() < p;
+        if (isRed) red++;
+        balls.push(isRed);
+      }
+      return { red, balls };
+    }
+
+    function drawSample(showAnimation = true) {
+      const s = state();
+      const result = s.mode === 'with'
+        ? sampleWithReplacement(s.n, s.p)
+        : sampleWithoutReplacementApprox(s.n, s.p);
+
+      const phat = result.red / s.n;
+      history.push({ red: result.red, phat, n: s.n, p: s.p });
+      updateCurrent(result, phat);
+      if (showAnimation) renderSampleBalls(result.balls);
+      renderHistory();
+      drawCharts();
+    }
+
+    function updateCurrent(result, phat) {
+      currentRed.textContent = result.red;
+      currentPhat.textContent = phat.toFixed(3);
+      drawCount.textContent = history.length;
+      sampleRedCount.textContent = result.red;
+    }
+
+    function renderSampleBalls(balls) {
+      sampleBallsEl.style.gridTemplateColumns = `repeat(${Math.min(5, Math.ceil(Math.sqrt(balls.length)))}, 1fr)`;
+      sampleBallsEl.innerHTML = '';
+      balls.forEach((isRed, idx) => {
+        const ball = document.createElement('div');
+        ball.className = 'sample-ball';
+        ball.style.background = isRed ? '#ef4444' : palette[idx % palette.length];
+        ball.style.animationDelay = `${idx * 35}ms`;
+        sampleBallsEl.appendChild(ball);
+      });
+    }
+
+    function renderHistory() {
+      const recent = history.slice(-12).reverse();
+      historyEl.innerHTML = recent.map((item, i) => `
+        <div class="history-item">
+          第 ${history.length - i} 次：红球 <strong>${item.red}</strong> 个，p̂ = <strong>${item.phat.toFixed(3)}</strong>
+        </div>
+      `).join('') || '<div class="small">还没有抽样记录。</div>';
+    }
+
+    function drawAxes(ctx, width, height, left, bottom, right, top) {
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, height - bottom);
+      ctx.lineTo(width - right, height - bottom);
+      ctx.stroke();
+    }
+
+    function drawCountDistribution() {
+      const ctx = countChart.getContext('2d');
+      const width = countChart.width;
+      const height = countChart.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const s = state();
+      const bins = Array(s.n + 1).fill(0);
+      history.forEach(h => {
+        if (h.n === s.n) bins[h.red]++;
+      });
+
+      const max = Math.max(...bins, 1);
+      const left = 36, right = 16, top = 16, bottom = 34;
+      drawAxes(ctx, width, height, left, bottom, right, top);
+
+      const chartW = width - left - right;
+      const chartH = height - top - bottom;
+      const barW = chartW / bins.length;
+
+      bins.forEach((value, i) => {
+        const h = (value / max) * (chartH - 10);
+        const x = left + i * barW + 1;
+        const y = height - bottom - h;
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(x, y, Math.max(barW - 2, 1), h);
+
+        if (bins.length <= 25 || i % Math.ceil(bins.length / 10) === 0) {
+          ctx.fillStyle = '#475569';
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(i), x + barW / 2, height - 18);
+        }
+      });
+
+      ctx.fillStyle = '#334155';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('红球个数', width / 2 - 22, height - 4);
+      ctx.save();
+      ctx.translate(12, height / 2 + 22);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('频数', 0, 0);
+      ctx.restore();
+    }
+
+    function drawPropDistribution() {
+      const ctx = propChart.getContext('2d');
+      const width = propChart.width;
+      const height = propChart.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const s = state();
+      const binCount = 20;
+      const bins = Array(binCount).fill(0);
+      history.forEach(h => {
+        const idx = Math.min(binCount - 1, Math.floor(h.phat * binCount));
+        bins[idx]++;
+      });
+      const max = Math.max(...bins, 1);
+      const left = 36, right = 16, top = 16, bottom = 34;
+      drawAxes(ctx, width, height, left, bottom, right, top);
+
+      const chartW = width - left - right;
+      const chartH = height - top - bottom;
+      const barW = chartW / bins.length;
+
+      bins.forEach((value, i) => {
+        const h = (value / max) * (chartH - 10);
+        const x = left + i * barW + 1;
+        const y = height - bottom - h;
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(x, y, Math.max(barW - 2, 1), h);
+      });
+
+      // theoretical p line
+      const xP = left + s.p * chartW;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(xP, top);
+      ctx.lineTo(xP, height - bottom);
+      ctx.stroke();
+
+      for (let t = 0; t <= 10; t++) {
+        const val = t / 10;
+        const x = left + val * chartW;
+        ctx.fillStyle = '#475569';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(val.toFixed(1), x, height - 18);
+      }
+
+      ctx.fillStyle = '#334155';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('样本比例 p̂', width / 2 - 25, height - 4);
+      ctx.save();
+      ctx.translate(12, height / 2 + 22);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('频数', 0, 0);
+      ctx.restore();
+    }
+
+    function drawCharts() {
+      drawCountDistribution();
+      drawPropDistribution();
+    }
+
+    function runBatch(times, animateFirst = true) {
+      for (let i = 0; i < times; i++) {
+        drawSample(i === 0 ? animateFirst : false);
+      }
+    }
+
+    function resetAll() {
+      history = [];
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        autoBtn.textContent = '自动播放';
+      }
+      currentRed.textContent = '0';
+      currentPhat.textContent = '0.000';
+      drawCount.textContent = '0';
+      sampleRedCount.textContent = '0';
+      sampleBallsEl.innerHTML = '';
+      renderHistory();
+      renderBucket();
+      drawCharts();
+    }
+
+    redPctInput.addEventListener('input', () => { updateLabels(); renderBucket(); drawCharts(); });
+    sampleSizeInput.addEventListener('input', () => { updateLabels(); drawCharts(); });
+    batchCountInput.addEventListener('input', updateLabels);
+    document.querySelectorAll('input[name="mode"]').forEach(el => el.addEventListener('change', drawCharts));
+
+    drawOnceBtn.addEventListener('click', () => drawSample(true));
+    draw10Btn.addEventListener('click', () => runBatch(10, true));
+    autoBtn.addEventListener('click', () => {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        autoBtn.textContent = '自动播放';
+        return;
+      }
+      autoBtn.textContent = '停止播放';
+      autoTimer = setInterval(() => runBatch(state().batch, true), 900);
+    });
+    resetBtn.addEventListener('click', resetAll);
+
+    updateLabels();
+    renderBucket();
+    renderHistory();
+    drawCharts();
+  </script>
+</body>
+</html>

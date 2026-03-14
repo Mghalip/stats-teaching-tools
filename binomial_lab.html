@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>二项分布实验室：猫头鹰投递局</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #111827;
+      --card: rgba(17, 24, 39, 0.88);
+      --card2: rgba(30, 41, 59, 0.88);
+      --ink: #f8fafc;
+      --muted: #cbd5e1;
+      --gold: #fbbf24;
+      --red: #ef4444;
+      --green: #10b981;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+      --line: rgba(148, 163, 184, 0.24);
+      --shadow: 0 18px 42px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(167,139,250,.18), transparent 22%),
+        radial-gradient(circle at top right, rgba(251,191,36,.14), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    }
+    .wrap { max-width: 1500px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 10px; font-size: 34px; }
+    .subtitle { color: var(--muted); line-height: 1.6; max-width: 980px; margin-bottom: 20px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr 400px;
+      gap: 20px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(6px);
+    }
+    .panel h2 { margin: 0 0 14px; color: var(--gold); font-size: 19px; }
+    .control { margin-bottom: 16px; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    input[type="range"], input[type="number"] { width: 100%; }
+    input[type="range"] { accent-color: var(--gold); }
+    input[type="number"] {
+      background: rgba(15,23,42,.7);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px;
+      background: rgba(30,41,59,.9); color: var(--gold);
+      border: 1px solid var(--line); font-size: 13px; font-weight: 700;
+    }
+    button {
+      border: 1px solid rgba(251,191,36,.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, #7c3aed 0%, #4c1d95 100%);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(76,29,149,.28);
+    }
+    button.secondary { background: linear-gradient(180deg, #475569 0%, #1e293b 100%); }
+    button.good { background: linear-gradient(180deg, #059669 0%, #065f46 100%); }
+    button.warn { background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .stat .value { font-size: 24px; font-weight: 800; }
+    .arena {
+      background: linear-gradient(180deg, rgba(30,41,59,.95), rgba(15,23,42,.98));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 310px;
+      margin-bottom: 16px;
+    }
+    .mailbox {
+      position: relative;
+      width: 100%;
+      min-height: 250px;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(251,191,36,.08), transparent 18%),
+        linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      overflow: hidden;
+      border: 1px solid rgba(251,191,36,.18);
+    }
+    .moon {
+      position: absolute; top: 18px; right: 24px;
+      width: 54px; height: 54px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff7cc, #fbbf24 70%, #d97706 100%);
+      box-shadow: 0 0 24px rgba(251,191,36,.25);
+    }
+    .mail-label {
+      position: absolute; top: 18px; left: 18px;
+      padding: 8px 12px; border-radius: 999px; background: rgba(15,23,42,.7);
+      border: 1px solid var(--line); color: var(--gold); font-weight: 700; font-size: 13px;
+    }
+    .owls {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+      padding: 72px 16px 16px;
+    }
+    .owl {
+      width: 54px; height: 54px; margin: 0 auto;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      opacity: 0; transform: translateY(-24px) scale(.85);
+      animation: swoop .45s ease forwards;
+      box-shadow: 0 8px 16px rgba(0,0,0,.18);
+    }
+    .owl.success { box-shadow: inset 0 0 0 2px rgba(16,185,129,.35), 0 8px 16px rgba(0,0,0,.18); }
+    .owl.fail { box-shadow: inset 0 0 0 2px rgba(239,68,68,.35), 0 8px 16px rgba(0,0,0,.18); }
+    @keyframes swoop { to { opacity: 1; transform: translateY(0) scale(1); } }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .note {
+      background: var(--card2); border: 1px solid var(--line); border-radius: 16px; padding: 14px;
+      line-height: 1.6; color: var(--muted);
+    }
+    .note strong { color: var(--ink); }
+    .check {
+      display: flex; justify-content: space-between; gap: 12px; align-items: center;
+      padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px;
+      background: rgba(15,23,42,.45);
+    }
+    .badge { font-weight: 800; padding: 6px 10px; border-radius: 999px; font-size: 12px; }
+    .yes { background: rgba(16,185,129,.18); color: #a7f3d0; }
+    .no { background: rgba(239,68,68,.18); color: #fecaca; }
+    canvas {
+      width: 100%; max-width: 100%; background: rgba(15,23,42,.65);
+      border: 1px solid var(--line); border-radius: 14px;
+    }
+    .history {
+      max-height: 230px; overflow: auto; background: rgba(15,23,42,.55);
+      border: 1px solid var(--line); border-radius: 14px; padding: 10px;
+      font-size: 14px; line-height: 1.5;
+    }
+    .history-item { padding: 6px 0; border-bottom: 1px dashed rgba(148,163,184,.18); }
+    .history-item:last-child { border-bottom: 0; }
+    .formula {
+      font-family: "Times New Roman", Georgia, serif;
+      font-size: 24px; text-align: center; padding: 14px;
+      color: #fde68a; background: rgba(15,23,42,.55);
+      border: 1px solid rgba(251,191,36,.18); border-radius: 16px;
+      margin-bottom: 12px;
+    }
+    .small { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    @media (max-width: 1220px) {
+      .grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>二项分布实验室：猫头鹰投递局</h1>
+    <div class="subtitle">
+      主题设定：每一次试验都像一只猫头鹰执行一次投递任务——要么 <strong>成功送达</strong>，要么 <strong>投递失败</strong>。这正好对应二项分布里的两种结果。你可以修改 <strong>n</strong> 和 <strong>p</strong>，一边验证四个条件，一边看模拟分布是否贴近理论分布。
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>魔法控制台</h2>
+
+        <div class="control">
+          <label for="nRange">试验次数 n：<span id="nValue">10</span></label>
+          <input id="nRange" type="range" min="1" max="25" step="1" value="10" />
+        </div>
+
+        <div class="control">
+          <label for="pRange">成功概率 p：<span id="pValue">0.60</span></label>
+          <input id="pRange" type="range" min="0.05" max="0.95" step="0.01" value="0.60" />
+        </div>
+
+        <div class="control">
+          <label for="xInput">计算某个成功次数 x</label>
+          <input id="xInput" type="number" min="0" max="25" value="6" />
+        </div>
+
+        <div class="control">
+          <label for="simBatch">每次自动模拟轮数：<span id="simBatchValue">50</span></label>
+          <input id="simBatch" type="range" min="10" max="200" step="10" value="50" />
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <button id="trialBtn">模拟 1 轮</button>
+            <button id="tenBtn" class="secondary">模拟 10 轮</button>
+            <button id="autoBtn" class="good">自动模拟</button>
+            <button id="resetBtn" class="warn">重置</button>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">P(X = x) = C(n, x) · pˣ · (1-p)ⁿ⁻ˣ</div>
+
+        <div class="note">
+          <strong>课堂玩法：</strong>先让学生判断一个情境是否满足二项分布，再用这里的猫头鹰投递模型做对照：<br>
+          1) 固定次数？<br>
+          2) 两种结果？<br>
+          3) 独立？<br>
+          4) 成功概率固定？
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="stats">
+          <div class="stat"><div class="label">当前 n</div><div class="value" id="statN">10</div></div>
+          <div class="stat"><div class="label">当前 p</div><div class="value" id="statP">0.60</div></div>
+          <div class="stat"><div class="label">本轮成功数</div><div class="value" id="statSuccess">0</div></div>
+          <div class="stat"><div class="label">累计模拟轮数</div><div class="value" id="statTrials">0</div></div>
+        </div>
+
+        <div class="arena">
+          <div class="mailbox">
+            <div class="moon"></div>
+            <div class="mail-label">猫头鹰投递现场</div>
+            <div class="owls" id="owls"></div>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="note">
+            <strong>二项分布四条件检查</strong>
+            <div id="checks"></div>
+          </div>
+          <div class="note">
+            <strong>理论值</strong><br>
+            均值：<span id="meanText"></span><br>
+            标准差：<span id="sdText"></span><br>
+            <span id="probText"></span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;" class="small">
+          每一轮模拟会让 n 只猫头鹰各飞一次。绿色代表成功送达，红色代表投递失败。右侧图里，蓝色柱状图是模拟结果，金色圆点是理论概率分布。
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>理论 vs 模拟</h2>
+        <canvas id="distChart" width="360" height="260"></canvas>
+        <div style="height:14px"></div>
+        <h2>最近模拟记录</h2>
+        <div class="history" id="history"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const nRange = document.getElementById('nRange');
+    const pRange = document.getElementById('pRange');
+    const xInput = document.getElementById('xInput');
+    const simBatch = document.getElementById('simBatch');
+    const nValue = document.getElementById('nValue');
+    const pValue = document.getElementById('pValue');
+    const simBatchValue = document.getElementById('simBatchValue');
+    const formulaBox = document.getElementById('formulaBox');
+    const statN = document.getElementById('statN');
+    const statP = document.getElementById('statP');
+    const statSuccess = document.getElementById('statSuccess');
+    const statTrials = document.getElementById('statTrials');
+    const meanText = document.getElementById('meanText');
+    const sdText = document.getElementById('sdText');
+    const probText = document.getElementById('probText');
+    const checks = document.getElementById('checks');
+    const owls = document.getElementById('owls');
+    const historyEl = document.getElementById('history');
+    const distChart = document.getElementById('distChart');
+    const trialBtn = document.getElementById('trialBtn');
+    const tenBtn = document.getElementById('tenBtn');
+    const autoBtn = document.getElementById('autoBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let history = [];
+    let autoTimer = null;
+
+    function state() {
+      return {
+        n: Number(nRange.value),
+        p: Number(pRange.value),
+        x: Math.max(0, Math.min(Number(nRange.value), Number(xInput.value))),
+        batch: Number(simBatch.value)
+      };
+    }
+
+    function factorial(num) {
+      let out = 1;
+      for (let i = 2; i <= num; i++) out *= i;
+      return out;
+    }
+
+    function comb(n, k) {
+      if (k < 0 || k > n) return 0;
+      k = Math.min(k, n - k);
+      let num = 1, den = 1;
+      for (let i = 1; i <= k; i++) {
+        num *= (n - k + i);
+        den *= i;
+      }
+      return num / den;
+    }
+
+    function binomProb(n, p, x) {
+      return comb(n, x) * (p ** x) * ((1 - p) ** (n - x));
+    }
+
+    function simulateOne(n, p) {
+      let success = 0;
+      const results = [];
+      for (let i = 0; i < n; i++) {
+        const ok = Math.random() < p;
+        results.push(ok);
+        if (ok) success++;
+      }
+      return { success, results };
+    }
+
+    function updateUI() {
+      const s = state();
+      xInput.max = s.n;
+      if (Number(xInput.value) > s.n) xInput.value = s.n;
+      nValue.textContent = s.n;
+      pValue.textContent = s.p.toFixed(2);
+      simBatchValue.textContent = s.batch;
+      statN.textContent = s.n;
+      statP.textContent = s.p.toFixed(2);
+      meanText.textContent = `${(s.n * s.p).toFixed(2)}`;
+      sdText.textContent = `${Math.sqrt(s.n * s.p * (1 - s.p)).toFixed(3)}`;
+      const px = binomProb(s.n, s.p, Number(xInput.value));
+      probText.innerHTML = `P(X = ${Number(xInput.value)}) = <strong style="color:#fde68a">${px.toFixed(4)}</strong>`;
+      formulaBox.innerHTML = `P(X = ${Number(xInput.value)}) = C(${s.n}, ${Number(xInput.value)}) · (${s.p.toFixed(2)})<sup>${Number(xInput.value)}</sup> · (${(1-s.p).toFixed(2)})<sup>${s.n - Number(xInput.value)}</sup>`;
+      renderChecks();
+      drawChart();
+      renderHistory();
+    }
+
+    function renderChecks() {
+      const s = state();
+      const checksData = [
+        { label: '固定次数（Fixed number of trials）', ok: true, note: `这里固定做 ${s.n} 次投递试验` },
+        { label: '两种结果（Success / Failure）', ok: true, note: '每次只有成功送达或投递失败' },
+        { label: '独立性（Independent trials）', ok: true, note: '默认每只猫头鹰的投递结果互不影响' },
+        { label: '成功概率固定（Same p each time）', ok: true, note: `每次成功概率都设为 p = ${s.p.toFixed(2)}` }
+      ];
+      checks.innerHTML = checksData.map(item => `
+        <div class="check">
+          <div>
+            <div style="font-weight:700;color:#f8fafc;">${item.label}</div>
+            <div style="font-size:12px;color:#cbd5e1;">${item.note}</div>
+          </div>
+          <div class="badge ${item.ok ? 'yes' : 'no'}">${item.ok ? '满足' : '不满足'}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderOwls(results = []) {
+      const s = state();
+      owls.style.gridTemplateColumns = `repeat(${Math.min(5, s.n)}, 1fr)`;
+      owls.innerHTML = '';
+      results.forEach((ok, idx) => {
+        const owl = document.createElement('div');
+        owl.className = `owl ${ok ? 'success' : 'fail'}`;
+        owl.style.animationDelay = `${idx * 35}ms`;
+        owl.textContent = ok ? '🦉' : '💥';
+        owl.title = ok ? '成功送达' : '投递失败';
+        owls.appendChild(owl);
+      });
+    }
+
+    function renderHistory() {
+      const recent = history.slice(-12).reverse();
+      historyEl.innerHTML = recent.map((item, idx) => `
+        <div class="history-item">
+          第 ${history.length - idx} 轮：成功 ${item.success}/${item.n}，样本成功比例 = ${(item.success/item.n).toFixed(3)}
+        </div>
+      `).join('') || '<div class="small">还没有模拟记录。</div>';
+    }
+
+    function drawAxes(ctx, width, height, left, bottom, right, top) {
+      ctx.strokeStyle = 'rgba(203,213,225,.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, height - bottom);
+      ctx.lineTo(width - right, height - bottom);
+      ctx.stroke();
+    }
+
+    function drawChart() {
+      const s = state();
+      const ctx = distChart.getContext('2d');
+      const width = distChart.width;
+      const height = distChart.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const bins = Array(s.n + 1).fill(0);
+      history.filter(h => h.n === s.n && Math.abs(h.p - s.p) < 1e-9).forEach(h => bins[h.success]++);
+      const simTotal = bins.reduce((a,b) => a+b, 0);
+      const simProp = bins.map(v => simTotal ? v / simTotal : 0);
+      const theory = Array.from({ length: s.n + 1 }, (_, x) => binomProb(s.n, s.p, x));
+      const maxY = Math.max(0.05, ...simProp, ...theory);
+
+      const left = 40, right = 18, top = 16, bottom = 38;
+      drawAxes(ctx, width, height, left, bottom, right, top);
+      const chartW = width - left - right;
+      const chartH = height - top - bottom;
+      const gap = 6;
+      const barW = chartW / theory.length;
+
+      theory.forEach((t, x) => {
+        const h = (simProp[x] / maxY) * (chartH - 10);
+        const bx = left + x * barW + 2;
+        const by = height - bottom - h;
+        ctx.fillStyle = '#60a5fa';
+        ctx.fillRect(bx, by, Math.max(barW - gap, 3), h);
+
+        const px = left + x * barW + barW / 2;
+        const py = height - bottom - (t / maxY) * (chartH - 10);
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(x), px, height - 18);
+      });
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('成功次数 x', width / 2 - 22, height - 4);
+      ctx.save();
+      ctx.translate(14, height / 2 + 18);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('概率 / 相对频率', 0, 0);
+      ctx.restore();
+    }
+
+    function runOne(showAnimation = true) {
+      const s = state();
+      const result = simulateOne(s.n, s.p);
+      history.push({ n: s.n, p: s.p, success: result.success });
+      statSuccess.textContent = result.success;
+      statTrials.textContent = history.length;
+      if (showAnimation) renderOwls(result.results);
+      drawChart();
+      renderHistory();
+    }
+
+    function runBatch(times, animateFirst = true) {
+      for (let i = 0; i < times; i++) runOne(i === 0 ? animateFirst : false);
+    }
+
+    function resetAll() {
+      history = [];
+      statSuccess.textContent = '0';
+      statTrials.textContent = '0';
+      owls.innerHTML = '';
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        autoBtn.textContent = '自动模拟';
+      }
+      updateUI();
+    }
+
+    nRange.addEventListener('input', updateUI);
+    pRange.addEventListener('input', updateUI);
+    xInput.addEventListener('input', updateUI);
+    simBatch.addEventListener('input', updateUI);
+    trialBtn.addEventListener('click', () => runOne(true));
+    tenBtn.addEventListener('click', () => runBatch(10, true));
+    autoBtn.addEventListener('click', () => {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        autoBtn.textContent = '自动模拟';
+        return;
+      }
+      autoBtn.textContent = '停止模拟';
+      autoTimer = setInterval(() => runBatch(state().batch, true), 900);
+    });
+    resetBtn.addEventListener('click', resetAll);
+
+    updateUI();
+  </script>
+</body>
+</html>
